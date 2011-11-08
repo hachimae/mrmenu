@@ -4,6 +4,7 @@ class Category extends APP_Controller
 {
 	var $form = array();
 	
+	
 	function __construct()
 	{
 		parent::__construct();
