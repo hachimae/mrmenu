@@ -471,5 +471,6 @@ class Order extends APP_Controller
 	{
 		parent::remove($id);
 		redirect('app/order');
+		//editing
 	}
 }
