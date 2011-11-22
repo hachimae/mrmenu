@@ -2,7 +2,7 @@
 
 class Welcome extends MY_Controller
 {
-	var $template = 'default.html',
+	var $template = 'index.html',
 		$data = array();
 		
 	function __construct()
@@ -12,10 +12,8 @@ class Welcome extends MY_Controller
 
 	function index()
 	{
-		$this->twig->render(
-			$this->template,
-			$this->data
-			);
+
+		$this->load->view('index');
 	}
 }
 

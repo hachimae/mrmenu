@@ -94,6 +94,8 @@ if( $item['type']=='hidden' ){
 			echo '<input type="hidden" name="'.$name.'[]" value="" />';
 			echo '</div>';
 			break;
+			
+
 		case 'textarea':
 			echo '<div class="input"><textarea name="'.$name.'" id="'.$name.'" class="'.$class.'">'.$value.'</textarea></div>';
 			break;
@@ -122,6 +124,7 @@ if( $item['type']=='hidden' ){
 				}
 			}
 			echo '</select>';
+			if($title == 'Add New Menu'){echo '  <a href="/app/category">Add Category</a>';}
 			echo '</div>';
 			break;
 		case 'checkbox':
@@ -134,8 +137,11 @@ if( $item['type']=='hidden' ){
 			echo '<div class="input"><input type="text" name="'.$name.'" id="'.$name.'" class="'.$class.'" value="'.$value.'" /></div>';
 			break;
 	}
+		
 	?>
+	
 </div>
+
 <?php endforeach; ?>
 
 <div class="form-row actions">

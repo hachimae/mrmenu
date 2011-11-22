@@ -42,9 +42,13 @@ $active_group = 'default';
 $active_record = TRUE;
 
 $db['default']['hostname'] = 'localhost';
+//$db['default']['hostname'] = 'mrmenu.db.6897113.hostedresource.com';
 $db['default']['username'] = 'root';
+//$db['default']['username'] = 'mrmenu';
 $db['default']['password'] = '';
+//$db['default']['password'] = 'Password13';
 $db['default']['database'] = '_kelson_mrmenu';
+//$db['default']['database'] = 'mrmenu';
 $db['default']['dbdriver'] = 'mysql';
 $db['default']['dbprefix'] = '';
 $db['default']['pconnect'] = TRUE;

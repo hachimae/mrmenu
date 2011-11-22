@@ -31,13 +31,13 @@ class MY_Controller extends CI_Controller {
 
 	function setContent($key = false, $val = false)
 	{
+	
 		if( $key==false ) return false;
 
 		if( !empty($this->data['content'][$key]) ){
 			$this->data['content'][$key] = array_merge( $this->data['content'][$key], $val );
 		}else{
 			$this->data['content'][$key] = $val;
-			
 		}
 	}
 
@@ -52,10 +52,10 @@ class MY_Controller extends CI_Controller {
 
 			// navigator
 			$this->template->write_view('navigator', 'layout/navigator', $this->data['navigator']);
-
+		
 			// content
 			$this->template->write_view('content', $this->content_template, $this->data['content']);
-
+			
 			// footer
 			$this->template->write_view('footer', 'layout/footer', $this->data['footer']);
 		}else{

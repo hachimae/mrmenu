@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="/media/css/login.css">
 <?php
 $login = array(
 	'name'	=> 'login',
@@ -12,6 +13,9 @@ if ($this->config->item('use_username', 'tank_auth')) {
 	$login_label = 'Email';
 }
 ?>
+<div align="center">
+<fieldset>
+<legend align="center">FORGOT PASSWORD</legend>
 <?php echo form_open($this->uri->uri_string()); ?>
 <table>
 	<tr>
@@ -20,5 +24,8 @@ if ($this->config->item('use_username', 'tank_auth')) {
 		<td style="color: red;"><?php echo form_error($login['name']); ?><?php echo isset($errors[$login['name']])?$errors[$login['name']]:''; ?></td>
 	</tr>
 </table>
-<?php echo form_submit('reset', 'Get a new password'); ?>
+<?php echo form_submit('reset', 'Get a new password','class=btn'); ?>
 <?php echo form_close(); ?>
+</fieldset>
+</div>
+

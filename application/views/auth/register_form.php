@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="/media/css/login.css">
 <?php
 if ($use_username) {
 	$username = array(
@@ -61,6 +62,12 @@ $shopdescription = array(
 	'size'	=> 30,
 );
 ?>
+
+<div align="center">
+<fieldset>
+<legend align="center">REGISTER</legend>
+
+
 <?php echo form_open($this->uri->uri_string()); ?>
 <table>
 	<?php if ($use_username) { ?>
@@ -154,5 +161,8 @@ $shopdescription = array(
 	<?php }
 	} ?>
 </table>
-<?php echo form_submit('register', 'Register'); ?>
+<?php echo form_submit('register', 'Register','class=btn'); ?>
+<?php echo form_reset('cancel', 'Later','class=btn'); ?>
+</fieldset>
 <?php echo form_close(); ?>
+</div>

@@ -22,7 +22,7 @@ class Category_model extends APP_Model
     function listCategory($shopId = false)
     {
     	$shopId = empty($shopId) ? $this->shopId : $shopId;
-
+		
     	$this->db
     		 ->select('id, parent_id, name')
     		 ->where('item_status = ', 'published')
@@ -45,7 +45,7 @@ class Category_model extends APP_Model
     			$data[$row['id']] = $row['name'];
     		}
     	}
-
+    		
     	return $data;
     }
 

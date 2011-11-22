@@ -20,6 +20,21 @@ class Menu_model extends APP_Model
         parent::__construct($this->table, $this->field);
     }
 
+    function getMenuData($menu_id)
+    {
+        $this->db
+             ->select($this->column)
+             ->where('id = ', $menu_id);
+        $query = $this->db->get( $this->table );
+        
+        if( $query->num_rows()<=0 ){
+            return false;
+        }else{
+
+            return $query->row_array();
+        }
+    }
+
 }
 
 ?>

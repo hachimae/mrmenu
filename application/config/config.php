@@ -15,7 +15,7 @@
 |
 */
 $config['base_url']	= '';
-
+//$config['base_url']	= 'http://www.hachimae.com/mrmenu/';
 /*
 |--------------------------------------------------------------------------
 | Index File

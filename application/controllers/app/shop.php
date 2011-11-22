@@ -16,7 +16,7 @@ class Shop extends APP_Controller
 	function index()
 	{
 		$this->setContent('title', 'Restaurant Information');
-
+		
 		parent::add( '/app/shop/update', array(
 			'name' => array( 'type'=>'text', 'label'=>'Name (TH)', 'validate'=>'required', 'class'=>'required', 'value'=>$this->shopData['name'] ),
 			'name_en' => array( 'type'=>'text', 'label'=>'Name (EN)', 'validate'=>'required', 'class'=>'required', 'value'=>$this->shopData['name_en'] ),

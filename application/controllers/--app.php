@@ -106,6 +106,7 @@ class App extends MY_Controller
 				header('location: /app/desk');
 				die( json_encode($response) );
 				break;
+
 			case 'update':
 				$response['success'] = false;
 				$post = $this->input->post();

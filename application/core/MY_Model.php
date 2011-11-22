@@ -9,7 +9,7 @@ class MY_Model extends CI_Model {
 
     function getMedia($id, $ref_table = 'ci_menu')
     {
-    	$this->db->select('id, file');
+    	$this->db->select('id,name,file,extension');
     	$this->db->where('ref_id = ', $id);
     	$this->db->where('ref_table = ', $ref_table);
     	$this->db->where('item_status = ', 'published');
@@ -18,7 +18,11 @@ class MY_Model extends CI_Model {
     	if( $query->num_rows()<=0 ){
     		return false;
     	}else{
-    		return $query->row_array();
+    		$media = $query->row_array();		
+    		//Replace image with thumbnail
+    		$media['file'] = $media['name'].'_thumb'.$media['extension'];
+    		return $media;
+    		//return $query->row_array();
     	}
     }
 

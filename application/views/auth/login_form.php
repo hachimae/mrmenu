@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="/media/css/login.css">
 <?php
 $login = array(
 	'name'	=> 'login',
@@ -31,7 +32,10 @@ $captcha = array(
 	'maxlength'	=> 8,
 );
 ?>
+<div align="center">
 <?php echo form_open($this->uri->uri_string()); ?>
+<fieldset align="center">
+<legend style="padding:10px">LOGIN</legend>
 <table>
 	<tr>
 		<td><?php echo form_label($login_label, $login['id']); ?></td>
@@ -81,13 +85,17 @@ $captcha = array(
 	} ?>
 
 	<tr>
-		<td colspan="3">
+		<td><?php echo form_label('Remember me', $remember['id']); ?></td>
+		<td >
 			<?php echo form_checkbox($remember); ?>
-			<?php echo form_label('Remember me', $remember['id']); ?>
-			<?php echo anchor('/app/forgot_password/', 'Forgot password'); ?>
+			
+			<?php echo anchor('/app/forgot_password/', 'Forgot password'); ?> | 
 			<?php if ($this->config->item('allow_registration', 'tank_auth')) echo anchor('/app/register/', 'Register'); ?>
+		
 		</td>
 	</tr>
 </table>
-<?php echo form_submit('submit', 'Let me in'); ?>
+<div align="center"><?php echo form_submit('submit', ' Let me in ','class=btn'); ?></div>
+</fieldset>
 <?php echo form_close(); ?>
+</div>

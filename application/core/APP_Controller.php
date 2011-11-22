@@ -39,7 +39,6 @@ class APP_Controller extends MY_Controller {
 	function setModel($model)
 	{
 		$this->model = $model;
-
 		// get shop data
 		$this->getShop();
 	}
@@ -63,7 +62,9 @@ class APP_Controller extends MY_Controller {
 
 	function edit($action, $field, $id)
 	{
+		
 		$field = $this->_checkPrevValue($field);
+		
 		$this->setContent('form_type', 'edit');
 		$this->setContent('current_id', $id);
 		$this->_displayForm($action, $field);
@@ -178,10 +179,11 @@ class APP_Controller extends MY_Controller {
 	{
 		// determine base url
 		$get = $this->input->get();
-		$page_url = site_url($base_url).'?';
+		//$page_url = site_url($base_url).'?';
+		$page_url = site_url($base_url);
 		if( $get!=false ){
 			foreach($get as $key=>$val){
-				$page_url .= '&'.$key.'='.$val;
+				//$page_url .= '&'.$key.'='.$val;
 			}
 		}
 
@@ -195,12 +197,15 @@ class APP_Controller extends MY_Controller {
 		$this->pagination->initialize($config);
 		$this->setContent('listPage', $this->pagination->create_links());
 	}
-
+	function _setListMeta($meta)
+	{
+		$this->setContent('listMeta', $meta);
+	}
+	
 	function _displayForm($action, $field)
 	{
 		$this->setFormAction($action);
 		$this->setFormField($field);
-
 		$this->content_template = 'admin/form';
 		$this->render();
 	}
@@ -209,16 +214,32 @@ class APP_Controller extends MY_Controller {
 	{
 		$config['upload_path'] = './media/uploads/';
 		$config['allowed_types'] = 'gif|jpg|png';
-		$config['max_size']	= '100';
-		$config['max_width']  = '1024';
-		$config['max_height']  = '768';
+		$config['max_size']	= '10000000';
+		$config['max_width']  = '10240';
+		$config['max_height']  = '7680';
+	
 
 		$this->load->library('upload', $config);
 		if(!$this->upload->do_upload()){
 			$error = $this->upload->display_errors();
 		}else{
 			$data = $this->upload->data();
+			echo $data['file_name'];
 			$this->_insertMedia($id, $data, $table);
+
+			//Begin Resize Image		
+			$config_resize['image_library'] = 'gd2';
+			$config_resize['source_image']	= 'media/uploads/'.$data['file_name'];
+			$config_resize['create_thumb'] = TRUE;
+			$config_resize['maintain_ratio'] = TRUE;
+			$config_resize['width']	 = 300;
+			$config_resize['height']	= 300;
+			$this->load->library('image_lib', $config_resize); 
+			if ( ! $this->image_lib->resize())
+			{
+			    echo $this->image_lib->display_errors();
+			}
+			//End Resize Image	
 		}
 	}
 

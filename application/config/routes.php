@@ -57,7 +57,18 @@ $route['app/change_email'] = "app/auth/change_email";
 $route['app/reset_email'] = "app/auth/reset_email";
 $route['app/unregister'] = "app/auth/unregister";
 
+//rewrite for view
+$route['app/order/view/(:any)/cooking/(:num)?page='] = "app/order/cooking/$2/view/$1";
 // rewrite api
+//Get All Restaurant : Default get just 1 record,and get by LIMIT
+$route['api/allrestaurant'] = "api/mrmenu/allrestaurant/1";
+$route['api/allrestaurant/(:num)'] = "api/mrmenu/allrestaurant/$1";
+//Get Full Restaurant 
+$route['api/fullrestaurants/(:num)'] = "api/mrmenu/fullrestaurants/$1";
+$route['api/fullrestaurants/(:num)/(:num)'] = "api/mrmenu/fullrestaurants/$1/$2";
+//Get Category of Restaurant by Restaurant ID
+$route['api/category/(:num)'] = "api/mrmenu/category/$1";
+//Get Reataurant
 $route['api/restaurant/(:num)/table/(:num)'] = "api/mrmenu/restaurant/id/$1/table/$2/action/get-date";
 $route['api/restaurant/(:num)'] = "api/mrmenu/restaurant/id/$1/action/get-date";
 $route['api/restaurant/(:num)/table/(:num)/last-update'] = "api/mrmenu/restaurant/id/$1/table/$2/action/last-update";
@@ -65,6 +76,6 @@ $route['api/restaurant/(:num)/last-update'] = "api/mrmenu/restaurant/id/$1/actio
 $route['api/order'] = "api/mrmenu/order";
 $route['api/order/(:num)'] = "api/mrmenu/order/transaction/$1";
 $route['api/dish/(:num)/(:num)'] = "api/mrmenu/dish/transaction/$1/dish/$2";
-
+$route['api/orderdel/(:num)'] = "api/mrmenu/orderdel/$1";
 /* End of file routes.php */
 /* Location: ./application/config/routes.php */

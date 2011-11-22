@@ -71,7 +71,7 @@ class Optional extends APP_Controller
 			'menu_id' => array( 'type'=>'hidden', 'value'=>$this->menu_id ),
 			)); */
 		$this->form['menu_id'] = array( 'type'=>'hidden', 'value'=>$this->menu_id );
-		parent::add(site_url('app/optional/update'), $this->form);
+		parent::add(site_url('app/optional/added'), $this->form);
 	}
 
 	function edit()
@@ -86,6 +86,7 @@ class Optional extends APP_Controller
 
 		// get price data
 		$data = $this->model->getRow($this->option_id);
+		//print_r($data);
 		// $data = $this->model->optionData($this->option_id);
 
 		$this->form['name']['value'] = $data['name'];
@@ -149,7 +150,7 @@ class Optional extends APP_Controller
 
 		// update option_meta
 		if( $group_id ){
-			$_meta_value = $this->input->post('meta_id');
+			$_meta_value = $this->input->post('meta_value');
 			$_meta_name = $this->input->post('meta_name');
 			$_meta_type = $this->input->post('meta_pricetype');
 			$_meta_price = $this->input->post('meta_price');
@@ -179,4 +180,62 @@ class Optional extends APP_Controller
 		die( json_encode($response) );
 	}
 
+	
+	function added()
+	{
+		// redefine data
+		// update by $this->model->updateRow(data, id)
+		$response = array('success'=>false);
+
+		// post = array( size, price. menu_id[, option_id] )
+		$data = array(
+			'name' => $this->input->post('name'),
+			'name_en' => $this->input->post('name_en'),
+			'option_type' =>  $this->input->post('option_type'),
+			'shop_id' => $this->shopId,
+			'menu_id' => $this->input->post('menu_id'),
+			);
+			
+		if( $this->input->post('id') ){
+			$data['id'] = $this->input->post('id');
+		}
+
+		if( empty($data['name']) ){
+			$response['error'] = 'Missing param.';
+			die( json_encode($response) );
+		}
+
+		$group_id = parent::update($data);
+
+		// update option_meta
+		if( $group_id ){
+			$_meta_value = $this->input->post('meta_value');
+			$_meta_name = $this->input->post('meta_name');
+			$_meta_type = $this->input->post('meta_pricetype');
+			$_meta_price = $this->input->post('meta_price');
+			foreach($_meta_name as $key=>$value){
+				if( empty($value) ) continue;
+
+				$temp = array(
+					'name' => $value,
+					'price_type' => $_meta_type[$key],
+					'price_value' => $_meta_price[$key],
+					);
+				
+				if( isset($_meta_value[$key]) ) {
+					$temp['id'] = $_meta_value[$key];
+				}
+
+				$meta_data[] = $temp;
+			}
+
+			$this->model->updateMeta($group_id, $meta_data);
+		}
+
+		$id = $this->db->insert_id();
+		
+		$response['success'] = true;
+		$response['key'] = empty($post['option_id']) ? $group_id : $post['option_id'];
+		die( json_encode($response) );
+	}
 }

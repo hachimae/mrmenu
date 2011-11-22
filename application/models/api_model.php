@@ -5,7 +5,8 @@ class Api_model extends CI_Model
 	var $table_member = 'ci_member',
         $table_restaurant = 'ci_shop',
         $table_category = 'ci_category',
-        $table_menu = 'ci_menu';
+        $table_menu = 'ci_menu',
+        $table_order = 'ci_order';
 
     function __construct()
     {

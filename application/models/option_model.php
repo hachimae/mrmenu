@@ -18,17 +18,38 @@ class Option_model extends APP_Model
         // Call the Model constructor
         parent::__construct($this->table, $this->field);
     }
-
-    function updateMeta($group_id, $meta_data)
+    function addMeta($group_id, $meta_data)
     {
+    	/*
     	$this->db->delete($this->table_meta, array(
     		'group_id' => $group_id
 	    	));
-
+		*/
     	foreach($meta_data as $row){
     		$row['group_id'] = $group_id;
+    		
+			//$this->db->where('id', $row['id']);
+			//$this->db->update($this->table_meta, $row); 
+			
     		$this->db->insert($this->table_meta, $row);
-    	}
+    	}    	
+    }
+    
+    function updateMeta($group_id, $meta_data)
+    {
+    	
+    	$this->db->delete($this->table_meta, array(
+    		'group_id' => $group_id
+	    	));
+		
+    	foreach($meta_data as $row){
+    		$row['group_id'] = $group_id;
+    		
+			//$this->db->where('id', $row['id']);
+			//$this->db->update($this->table_meta, $row); 
+			
+    		$this->db->insert($this->table_meta, $row);
+    	}    	
     }
 
     function getMeta($group_id)
@@ -93,6 +114,21 @@ class Option_model extends APP_Model
         }
     }
 
+    function optionData($option_id)
+    {
+    	echo $option_id;
+        $this->db
+             ->select()
+             ->where('group_id = ',$option_id);
+        $query = $this->db->get( 'ci_option_meta' );
+           	
+        if( $query->num_rows()<=0 ){
+            return false;
+        }else{
+
+            return $query->result_array();
+        }
+    }
 }
 
 ?>

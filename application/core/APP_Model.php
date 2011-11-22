@@ -33,7 +33,21 @@ class APP_Model extends MY_Model {
 			return false;
 		}
 	}
-
+	
+	function getShopById($id)
+	{
+			$this->db
+			 ->select('id, name, name_en, detail, detail_en, vat, charge, cess')
+			 ->where('id = ', $id);
+		$query = $this->db->get('ci_shop');
+		if( $query->num_rows()>0 ){
+			$this->shopData = $query->row_array();
+			return $this->shopData;
+		}else{
+			return false;
+		}	
+	}
+	
 	function setTable($table)
 	{
 		$this->table = $table;
@@ -55,10 +69,12 @@ class APP_Model extends MY_Model {
 
 	function getPage($page = 1, $perpage = 10, $filter = false, $order_key = "modified_date DESC")
 	{
-		echo $this->table;
+		//echo $this->table;
+		
 		$this->_createFilter($filter);
 
 		$this->db->select( $this->field );
+
 		$this->db->order_by( $order_key );
 
 		$start = ($page-1)*$perpage;
@@ -119,10 +135,9 @@ class APP_Model extends MY_Model {
 
 	function _createFilter($filter)
 	{
-		echo $filter;
 		// default filter
-		$this->db->where( 'item_status = ', 'published' );
-		$this->db->where( 'shop_id = ', $this->shopId );
+		//$this->db->where( 'item_status = ', 'published' );
+		//$this->db->where( 'shop_id = ', $this->shopId );
 		//Reverse filter
 		//$this->db->where( 'item_status = ', 'deleted' );
 		// determine $filter
@@ -140,6 +155,7 @@ class APP_Model extends MY_Model {
 		if( $filter!=false ){
 			
 			foreach($filter as $key=>$val){
+				
 				if( is_numeric($key) ){
 					$this->db->where( $val );
 				}else{

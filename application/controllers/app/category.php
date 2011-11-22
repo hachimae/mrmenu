@@ -45,14 +45,15 @@ class Category extends APP_Controller
 			'name_en'	 => array( 'type'=>'normal', 'name'=>'Name (EN)', 'class'=>'col-name' ),
 			);
 
-		$data = $this->model->getPage($page, 3);
+		$filter = array('item_status'=>'published','shop_id'=>$this->shopId);
+		$data = $this->model->getPage($page,10,$filter);
 
 		$this->_setSearch('/app/category', array( 'name', 'name_en' ));
 
 		$this->_setListTools( $tools );
 		$this->_setListCol( $col );
 		$this->_setListData( $data );
-		$this->_setListPage( 'app/category', $this->model->countAll(), 3 );
+		$this->_setListPage( 'app/category?', $this->model->countAll(), 10);
 
 		$this->_list();
 	}
@@ -75,7 +76,7 @@ class Category extends APP_Controller
 
 		// get media
 		$thumbnail = $this->model->getMedia($id, 'ci_category');
-
+		
 		$this->form['name']['value'] = $data['name'];
 		$this->form['name_en']['value'] = $data['name_en'];
 		$this->form['description']['value'] = $data['description'];

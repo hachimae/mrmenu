@@ -1,4 +1,7 @@
 <?php
+$page = $this->input->get('page');
+$view = $this->input->get('view');
+$total = 0;
 
 // admin/list.php
 // ------------------------------------
@@ -17,11 +20,12 @@ $allCol = $allCol>0 ? $allCol : 1;
 
 <div id="list">
 <!-- Top Button -->
-<?php if( !empty($listTools) ): ?>
+<?php if( !empty($listTools) ):?>
 <ul class="tools">
-	<?php foreach($listTools as $key=>$tool): if($key=='edit') continue; ?>
+	<?php foreach($listTools as $key=>$tool): if($key=='edit') continue; if($key=='published') continue; if($key=='unpublished') continue; ?>
 	<li class="<?php echo empty($tool['class']) ? $tool : 'tool-default'; ?>">
-		<a class="btn" href="<?php echo $tool['action']; ?>" data-action="<?php echo strtolower($tool['name']); ?>"><?php echo $tool['name']; ?></a>
+		<a class="btn" href="<?php echo $tool['action']; ?>" data-action="<?php echo strtolower($tool['name']); ?>"><?php echo $tool['name']; ?></a> 
+		
 	</li>
 	<?php endforeach; ?>
 	<!--------------- Start Search Box ----------------->
@@ -68,7 +72,7 @@ $allCol = $allCol>0 ? $allCol : 1;
 	<!--------------- End THEAD Table Section ----------------->
 <tbody>
 <?php 
-if( !empty($listData) ): 
+if( !empty($listData) ):
 foreach((array)$listData as $row){
 	echo '<tr>';
 	foreach($listCol as $key=>$col){
@@ -81,19 +85,68 @@ foreach((array)$listData as $row){
 				echo '<input type="checkbox" name="selected[]" value="'.$row['id'].'" />';
 				break;
 			case 'tools':
+				//View for Order
+				if($view == 'cancel'){
+					$listTools['cancel'] = null;
+					if(isset($listTools['cooking'])) echo '<a class="btn" href="'.$listTools['cooking']['action'].'/'.$row['id'].'?page='.$page.'&view='.$listTools['cooking']['view'].'" data-action="cooking">Re-Cooking</a>';
+				}else if($view == 'cooking'){
+					$listTools['cooking'] = null;
+					if(isset($listTools['finished'])) echo '<a class="btn" href="'.$listTools['finished']['action'].'/'.$row['id'].'?page='.$page.'&view='.$listTools['finished']['view'].'" data-action="finished">Finished</a>';
+				}else if($view == 'finished'){
+					$listTools['cancel'] = null;
+				}else{
+					if(isset($listTools['cooking'])) echo '<a class="btn" href="'.$listTools['cooking']['action'].'/'.$row['id'].'?page='.$page.'&view='.$listTools['cooking']['view'].'" data-action="cooking">Cooking</a>';
+				}
+				//view for Menu
+				if($view == 'unpublished'){
+					if(isset($listTools['published'])) echo '<a class="btn" href="'.$listTools['published']['action'].'/'.$row['id'].'?page='.$page.'&view='.$listTools['published']['view'].'" data-action="published">Published</a>';
+				}else if($view == 'published'){
+					if(isset($listTools['unpublished'])) echo '<a class="btn" href="'.$listTools['unpublished']['action'].'/'.$row['id'].'?page='.$page.'&view='.$listTools['unpublished']['view'].'" data-action="unpublished">Unpublished</a>';
+				}else if($view == 'deleted'){
+					$listTools['remove'] = null;
+					if(isset($listTools['published'])) echo '<a class="btn" href="'.$listTools['published']['action'].'/'.$row['id'].'?page='.$page.'&view='.$listTools['published']['view'].'" data-action="published">Published</a>';
+				}
 				if(isset($listTools['edit'])) echo '<a class="btn" href="'.$listTools['edit']['action'].'/'.$row['id'].'" data-action="edit">Edit</a>';
-				if(isset($listTools['change'])) echo '<a class="btn" href="'.$listTools['change']['action'].'/'.$row['id'].'" data-action="change">Change</a>';
+				//For order detail
+
+				if(isset($listTools['cancel'])) echo '<a class="btn" href="'.$listTools['cancel']['action'].'/'.$row['id'].'?page='.$page.'&view='.$listTools['cancel']['view'].'" data-action="cancel">Cancel</a>';
+				
+				if(isset($row['dish_status']) and ($row['dish_status'] <> 'receive'))
+				{
+					if(isset($listTools['receive'])) echo '<a class="btn" href="'.$listTools['receive']['action'].'/'.$row['id'].'" data-action="receive">receive again</a>';
+				}
 				if(isset($listTools['remove'])) echo '<a class="btn" href="'.$listTools['remove']['action'].'/'.$row['id'].'" data-action="remove">Remove</a>';
-				if(isset($listTools['cooking'])) echo '<a class="btn" href="'.$listTools['cooking']['action'].'/'.$row['id'].'" data-action="cooking">Cooking</a>';
-				if(isset($listTools['cancel'])) echo '<a class="btn" href="'.$listTools['cancel']['action'].'/'.$row['id'].'" data-action="cancel">Cancel</a>';
 				
 				break;
             case 'order-detail':
 				echo '<a href="/app/order/detail/'.$row['id'].'">'.$row[$key].'</a>';
+				
+                break;
+            case 'option-detail':
+            	//Calculate Total price
+				echo '<a href="/app/order/option/'.$row['id'].'">'.$row[$key].'</a>';
+				//Calcualte only non-cancel dish
+				if($row['dish_status'] <> 'cancel')
+				{
+					$total = $total + ($row['price']*$row['quantity'])  ;
+				}
+				
                 break;
 			case 'normal':
 			default:
-				echo $row[$key];
+				if(($row[$key] == 'cancel') or ($row[$key] == 'deleted')){
+					echo '<span style="color:#AE1215;">'.$row[$key].'</span>';
+				}else if($row[$key] == 'cooking'){
+					echo '<span style="color:#FF7200;">'.$row[$key].'</span>';
+				}else if($row[$key] == 'finished'){
+					
+					echo '<span style="color:#39B330;">'.$row[$key].'</span>';
+				}else{
+					echo $row[$key];
+				}
+				
+				
+				
 				break;
 		}
 		echo '</td>';
@@ -105,8 +158,8 @@ else:
 ?>
 	<tr><td class="error empty-data" colspan="<?php echo $allCol; ?>">empty</td></tr>
 <?php endif; ?>
-<tbody>
 
+</tbody>
 <?php if( !empty($listPage) ): ?>
 <tfoot>
 	<tr>
@@ -116,7 +169,35 @@ else:
 <?php endif; ?>
 
 </table>
+<?php if(isset($listMeta) and ($listMeta['thispage'] == 'detail') ){ ?>
+	<div class='total'>
+	 <?php 
+		//Total means Price + Addion Price + Vat + Charge
+		// calVat();
+		// calCharge();
+		$additon_price = 0;
+		foreach ($listMeta['addition_price'] as $key=>$value)
+		{
+			$additon_price += $value;
+		}
+		
+		$total = $total + $additon_price;
+		$charge =  ($total*$listMeta['charge'])/100;
+		$vat =  ($total*$listMeta['vat'])/100;
+		$cess = 0;
+		$currency = " THB";
+		
+		echo 'Charge '.$listMeta['charge'].'% : '.$charge.' THB<br>';
+		echo 'Vat '.$listMeta['vat'].' % : '.$vat.' THB<br>';
+		echo 'Total : '.($total + $charge + $vat + $cess).$currency; 
+		echo '<br>';	
+		?>
+	</div>
+<?php } ?>
 <!--------------- End Showing Table Section ----------------->
+<?php if( !empty($listMeta) ){ ?>
+<a href="../<?php echo $listMeta['prepage']; ?>/<?php echo $listMeta['num']; ?>"> Back </a>
+<?php } ?>
 </div>
 
 <script type="text/javascript">
@@ -151,7 +232,7 @@ $(document).ready(function(){
 					$('tbody .col-check input:checked').each(function(){
 						dataValue += '&'+$(this).attr('name')+'='+$(this).val();
 					});
-
+					//alert(dataValue);
 					$.ajax({
 						url: $(this).attr('href'),
 						data: dataValue,
@@ -165,6 +246,73 @@ $(document).ready(function(){
 							}
 						}
 					});
+					break;
+				case 'receive':
+					e.preventDefault();
+					
+					var dataValue = 'action=multiReceive&_='+Math.random();
+					$('tbody .col-check input:checked').each(function(){
+						dataValue += '&'+$(this).attr('name')+'='+$(this).val();
+					});
+					
+					$.ajax({
+						url: $(this).attr('href'),
+						data: dataValue,
+						type: 'post',
+						dataType: 'json',
+						success: function(response){
+							if( response.success ){
+								window.location.reload();
+							}else{
+								alert( response.error );
+							}
+						}
+					
+					});					
+					break;
+				case 'cooking':
+					e.preventDefault();
+					
+					var dataValue = 'action=multiCooking&_='+Math.random();
+					$('tbody .col-check input:checked').each(function(){
+						dataValue += '&'+$(this).attr('name')+'='+$(this).val();
+					});
+					
+					$.ajax({
+						url: $(this).attr('href'),
+						data: dataValue,
+						type: 'post',
+						dataType: 'json',
+						success: function(response){
+							if( response.success ){
+								window.location.reload();
+							}else{
+								alert( response.error );
+							}
+						}
+					});					
+					break;
+				case 'finished':
+					e.preventDefault();
+					
+					var dataValue = 'action=multiFinished&_='+Math.random();
+					$('tbody .col-check input:checked').each(function(){
+						dataValue += '&'+$(this).attr('name')+'='+$(this).val();
+					});
+					
+					$.ajax({
+						url: $(this).attr('href'),
+						data: dataValue,
+						type: 'post',
+						dataType: 'json',
+						success: function(response){
+							if( response.success ){
+								window.location.reload();
+							}else{
+								alert( response.error );
+							}
+						}
+					});					
 					break;
 				case 'print':
 					e.preventDefault();

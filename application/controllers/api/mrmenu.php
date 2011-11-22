@@ -21,7 +21,47 @@ class Mrmenu extends REST_Controller
         parent::__construct();
        	self::_getKey(); // check api key
     }
+    /*
+    | Get all restaurant
+    | -------------------------------------------------------------
+    | url: /api/restaurant
+    */
+    function allrestaurant_get($offset,$offset2 = 0)
+    {
+    	$_response['restaurant'] = self::_getAllRestaurant($offset,$offset2); 
+    	
+          self::_success( $_response );
+           break;
+    }
+    //Get only Restaurant Thumb and Name
+    function restaurantthumb_get($offset){
     
+    }
+    
+    function fullrestaurants_get($offset,$offset2 = 0)
+    {
+		//Get All Restuarant Data
+    	$_response['restaurant'] = self::_getAllRestaurant($offset,$offset2); 
+    	//Get Each Category
+    	foreach($_response['restaurant'] as $restaurants){
+    		$rest_id = strval($restaurants['id']);
+    		$cat = self::_getRestaurantCategory($rest_id);
+    		if($rest_id <> ''){
+    			$_response['restaurant'][$rest_id]['category'] = $cat;
+    		}
+    		//Get Each Menu in Category
+			if(empty($cat)){
+			     continue;
+			}
+    		foreach($cat as $key){
+    			$menu = self::_getMenuByCat($key['id']);
+    			$_response['restaurant'][$rest_id]['category'][$key['id']]['menu'] = $menu;
+    		}
+    	}
+    	
+        self::_success( $_response );
+        break;
+    }
     /*
     | check last update & get menu
     | -------------------------------------------------------------
@@ -31,7 +71,7 @@ class Mrmenu extends REST_Controller
     {
     	//Variable form GET Method
         $restaurant_id = $this->get('id');
-      	$table_id = $this->get('id');
+      	//$table_id = $this->get('id');
         $action = $this->get('action');
 		//If Restaurant ID doesn't have ,will throw Error
         if( empty($restaurant_id) ){
@@ -52,8 +92,7 @@ class Mrmenu extends REST_Controller
                     self::_success( array( 'lastupdate'=>$restaurant['last_update'] ) );
                 }
                 break;
-                
-            // get menu data
+
             default:
                 // @log: <client> request data of <restaurant> at <time>            
                 // get shop information
@@ -69,7 +108,28 @@ class Mrmenu extends REST_Controller
                 break;
         }
     }
-
+	
+    function category_get($restaurant_id)
+    {
+        $this->rest->db
+             ->select('id,name')
+             ->where('shop_id = ',$restaurant_id);
+        $query = $this->rest->db->get( $this->table_category );
+        $cat = $query->result_array();
+        
+        foreach($cat as $row){
+	        $this->rest->db
+	             ->select('name,category_id')
+	             ->where('category_id = ',$row['id']);
+	        $query = $this->rest->db->get( $this->table_menu );
+	        $menu = $query->result_array();  
+	        $row['amount'] = sizeof($menu);  
+	        $row['menu'] = $menu;    
+	        //print_r($row); 
+	        $_response['category'][] = $row;
+        }
+    	self::_success( $_response );
+    }
     /*
     | restaurant api
     | --------------------------------------------------------------
@@ -83,7 +143,7 @@ class Mrmenu extends REST_Controller
     }
    
     /*
-    | remove dish from order
+    | remove ordered dish from order
     | --------------------------------------------------------------
     | url: /api/dish/transaction/0000000000/dish/1
     */
@@ -145,9 +205,9 @@ class Mrmenu extends REST_Controller
     | --------------------------------------------------------------
     | url: /api/order/transaction/0000000000
     */
-    function order_delete()
+    function orderdel_delete($transaction_id)
     {
-        $transaction_id = $this->get('transaction');
+        //$transaction_id = $this->get('transaction');
         
         if( empty($transaction_id) || empty($this->userId) ){
             self::_throwError('Missing param.', '500');
@@ -212,12 +272,16 @@ class Mrmenu extends REST_Controller
     	$restaurant_id = $this->post('restaurant');
     	$table_id = $this->post('table');
         $order_data = $this->post('order');
-        
         print_r($order_data);
+		if($table_id == ""){
+			$table_id = 0;
+		}
+        //print_r($order_data);
         // flow control
         // ========================
         // 1) check validate
-        if( empty($restaurant_id) || empty($table_id) || empty($order_data) ){
+        //f( empty($restaurant_id) || empty($table_id) || empty($order_data) ){
+        if( empty($restaurant_id) || empty($order_data) ){
             self::_throwError('Missing param.', '500');
         }else{
             $order_item = $order_data['item'];
@@ -227,12 +291,14 @@ class Mrmenu extends REST_Controller
         $subtotal_price = 0;
         $order_data['total'] = (float)$order_data['total'];
         $order_data['subtotal'] = (float)$order_data['subtotal'];
+        
         foreach($order_item as $item){
             // check status & price
             if( !self::_checkMenuStatus($item['id'], $item['price']) ){
                 self::_throwError('Your restaurant data is not uptodate.', '500');
             }else{
-                $subtotal_price += $item['price'];
+               // $subtotal_price += $item['price'];
+                $subtotal_price += ($item['price'] * $item['quantity']);
             }
             
             if( isset($item['option']) ){
@@ -241,7 +307,8 @@ class Mrmenu extends REST_Controller
                         self::_throwError('Your restaurant data is not uptodate.', '500');
                     }else{
                         foreach($option['data'] as $option_item){
-                            $subtotal_price += $option_item['price'];
+                           // $subtotal_price += $option_item['price'];
+                            $subtotal_price += ($option_item['price'] * $item['quantity']);
                         }
                     }
                 }
@@ -258,7 +325,7 @@ class Mrmenu extends REST_Controller
             $vat = self::_percent($restaurant_data['vat']);
             $charge = self::_percent($restaurant_data['charge']);
             
-            $total_price = $subtotal_price*$charge*$vat;
+            $total_price = $subtotal_price * $charge * $vat;
             if( abs($total_price-$order_data['total'])>=0.00001 ){
                 self::_throwError('Total not match ('.$total_price.', '.$order_data['total'].').', '500');
             }
@@ -346,7 +413,7 @@ class Mrmenu extends REST_Controller
     {
         $db = $this->rest->db;
         $price = 0;
-        echo $order_id.$dish_id;
+        //echo $order_id.$dish_id;
         
         // select price from option
         $db->select('price')
@@ -407,7 +474,7 @@ class Mrmenu extends REST_Controller
         }
         
         // 2) insert into [order-dish]
-        foreach((array)$order_data['item'] as $index=>$dish){
+        foreach((array)$order_data['item'] as $index => $dish){
             $result = $db->insert($this->table_orderdish, array(
                 'order_id' => $order_id,
                 'menu_id' => $dish['id'],
@@ -419,11 +486,11 @@ class Mrmenu extends REST_Controller
                 'created_date' => $current,
                 'modified_date' => $current
             ));
-            if( $result==false ){
+            if( $result == false ){
                 $db->trans_rollback();
                 self::_throwError('Can not insert [order-dish].', '500');
             }else{
-                $dish_id = $db->insert_id();
+                $dish_id = $db->insert_id(); // get auto ID
                 $order_data['item'][$index]['dish_id'] = $dish_id;
             }
             
@@ -435,6 +502,7 @@ class Mrmenu extends REST_Controller
                     
                     if( isset($option_group['data']) ){
                         foreach((array)$option_group['data'] as $option_index=>$option){
+                        	//Insert option into ci_option_meta table 
                             $result = $db->insert($this->table_orderoption, array(
                                 'order_id' => $order_id,
                                 'dish_id' => $dish_id,
@@ -442,7 +510,6 @@ class Mrmenu extends REST_Controller
                                 'group_id' => $group_id,
                                 'group_name' => $group_name,
                                 'name' => $option['name'],
-                                // 'description' => $option['description'],
                                 'price' => $option['price'],
                                 'created_date' => $current,
                                 'modified_date' => $current
@@ -532,7 +599,7 @@ class Mrmenu extends REST_Controller
         }
     }
     
-    // get thumbnail
+    // get thumbnail 
     // -------------------------------------------------------------
     private function _getThumbnail($ref_id, $ref_table)
     {
@@ -550,7 +617,47 @@ class Mrmenu extends REST_Controller
             return $result['file'];
         }
     }
-    
+    //Get All Restaurant
+    //--------------------------------------------------------------
+    private function _getAllRestaurant($offset = 1,$offset2 = 0)
+    {
+    	
+    	/*
+        $select = array(
+            'id', 'name AS name_th', 'name_en', 
+            'detail AS detail_th', 'detail_en',
+            'charge', 'vat', 'cess',
+            'modified_date AS last_update'
+        );
+        $this->rest->db
+             ->select( implode(', ', $select) );
+        $query = $this->rest->db->get( $this->table_restaurant );    
+
+        if( $query->num_rows()<=0 ){
+            return false;
+        }else{
+	        foreach( $query->result_array() as $row ){
+	        	$row['thumbnail'] = self::_getThumbnail($row['id'],$this->table_restaurant);
+				$allrest[] = $row;
+				print_r($row);
+				
+			}        	
+           return $allrest;
+        }*/
+    	$this->load->database();
+       // $query = $this->db->query('SELECT * FROM ci_shop LIMIT '.$offset);
+        $query = $this->db->get('ci_shop',$offset,$offset2);
+        $i = 0;
+        foreach( $query->result_array() as $row ){
+        	$row['thumbnail'] = self::_getThumbnail($row['id'],$this->table_restaurant);
+			$allrest[$row['id']] = $row;
+			$i++;	
+		}
+		$allrest['amount'] = $i;
+		//print_r($allrest);     	
+          return $allrest;
+   
+    }
     // get restaurant information
     // -------------------------------------------------------------
     private function _getRestaurant($restaurant_id = false)
@@ -593,8 +700,10 @@ class Mrmenu extends REST_Controller
     private function _success($response = array())
     {
         $_response['status'] = 1;
-        $_response = $response;
+       //$_response = $response;
+        
         $_response = array_merge((array)$_response, (array)$response);
+        //print_r($_response);
     	$this->response($_response, 200);
     }
 
@@ -612,17 +721,21 @@ class Mrmenu extends REST_Controller
         if( $query->num_rows()<=0 ){
             return false;
         }else{
+        	
             foreach( $query->result_array() as $row ){
                 $category_id[] = $row['id'];
                 //Not have parent
                 if( empty($row['parent_id']) ){
+                	
                     $category[$row['id']] = array(
+                    	'id' => $row['id'],
                         'name_th' => $row['name_th'],
                         'name_en' => $row['name_en'],
                         'thumbnail' => self::_getThumbnail($row['id'], 'ci_category'),
                         'counting' => $this->_countMenu($row['id']),
                         'child' => false
                     );
+                    
                 }else{
                 //Have parent
                     $category[$row['parent_id']]['child'][$row['id']] = array(
@@ -680,9 +793,7 @@ class Mrmenu extends REST_Controller
              ->where('shop_id = ',$restaurant_id);
         $query2 = $this->rest->db->get( $this->table_option_group );
         $option_group_rows = $query2->num_rows();
-        
-       
-        
+              
         if( $query->num_rows()<= 0 ){
             return false;
         }else{ 	
@@ -719,6 +830,61 @@ class Mrmenu extends REST_Controller
             return $data;
         }
     }
+
+    private function _getMenuByCat($cat_id)
+    {
+    	//Get data from table_menu
+        $this->rest->db
+             ->select('*')
+             ->where('item_status = ', 'published')
+             ->where('outofstock = ', 'no')
+             ->where('shop_id = ', $cat_id);
+        $query = $this->rest->db->get( $this->table_menu );
+
+       //Get data from table_option_group
+        $this->rest->db
+             ->select('id,menu_id,name,name_en,option_type')
+             ->where('shop_id = ',$cat_id);
+        $query2 = $this->rest->db->get( $this->table_option_group );
+        $option_group_rows = $query2->num_rows();
+              
+        if( $query->num_rows()<= 0 ){
+            return false;
+        }else{ 	
+        	// Need to cont. 3/11/2011
+            foreach( $query->result_array() as $row ){
+                foreach( $query2->result_array() as $option_group ){    			
+        			if($option_group['menu_id'] == $row['id']){
+				        //Get data from table_option_meta
+				        $this->rest->db
+				             ->select('id,name,name_en,price_type,price_value')
+				             ->where('group_id = ',$option_group['id']);
+				        $query3 = $this->rest->db->get( $this->table_option_meta );
+				        $option_meta = $query3->result_array();
+				        $opt_meta = null;
+						for($i=0;$i<sizeof($option_meta);$i++){
+							$opt_meta_id[] = $option_meta[$i]['id'];
+		                    $opt_meta[$option_meta[$i]['id']] = array( //string
+		                        'name_th' => $option_meta[$i]['name'],
+		                        'name_en' => $option_meta[$i]['name_en'],
+			                    //'name_en' => $option_meta[$i]['name_en'],
+			                    //'name_en' => $option_meta[$i]['name_en'],
+		                    );						
+						}
+				        $option_group['option_value'] =  $opt_meta;	
+        				$row['options'] = $option_group; 
+        							
+        			}
+        		}
+                $row['thumbnail'] = self::_getThumbnail($row['id'], 'ci_menu');
+                //$row['options'] = "options";
+                $data[$row['id']] = $row;
+            }
+            //print_r($data);
+            return $data;
+        }
+    }
+    
 
     private function _getRestaurantMenuOptions($menu_id)
     {

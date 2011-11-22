@@ -7,7 +7,7 @@ class Menu extends APP_Controller
 	function __construct()
 	{
 		parent::__construct();
-
+		
 		$this->load->model('menu_model', 'menu');
 		$this->setModel( $this->menu );
 		//Form on Edit Menu
@@ -23,37 +23,95 @@ class Menu extends APP_Controller
 			'option' => array( 'type'=>'child', 'label'=>'Option', 'action'=>'/app/optional?ref_id=' ),
 			);
 	}
-
+	/***************** INDEX FUNCTION *********************/
 	function index()
 	{
+		$per_page = 15;
+		$view = $this->input->get('view');
 		$page = $this->input->get('page');
 		$page = !empty($page) ? $page : 1;
-
+		
+		if(isset($view) && ($view <> "")){
+			redirect('/app/menu/view?view='.$view);
+		}
 		$this->setContent('title', 'Menu Management');
 
-		$tools = array(
-			
+		$tools = array(	
 			'add'	 => array( 'class'=>'button', 'name'=>'Add', 'action'=>'/app/menu/add' ),
 			'edit'	 => array( 'class'=>'button', 'name'=>'Edit', 'action'=>'/app/menu/edit' ),
-			'regain' => array( 'class'=>'button', 'name'=>'Regain', 'action'=>'/app/menu/regain' ),
 			'remove' => array( 'class'=>'button', 'name'=>'Remove', 'action'=>'/app/menu/remove', 'event'=>'makeRemove()' ),
 			);
 		$col = array(
 			'id'	 => array( 'type'=>'normal', 'name'=>'ID', 'class'=>'col-id' ),
-			'category_id' => array( 'type'=>'normal', 'name'=>'Category', 'class'=>'col-category' ),
+			'category_id'	 => array( 'type'=>'normal', 'name'=>'category_id', 'class'=>'col-id' ),
 			'name'	 => array( 'type'=>'normal', 'name'=>'Name', 'class'=>'col-name' ),
+			'category_name' => array( 'type'=>'normal', 'name'=>'Category', 'class'=>'col-category' ),
+			'item_status'	 => array( 'type'=>'normal', 'name'=>'Status', 'class'=>'col-name' ),
 			);
-		$data = $this->model->getPage($page, 3);
+			
+		$filter = array('item_status'=>'published',
+						'shop_id'=>$this->shopId);
+		$data = $this->model->getPage($page, $per_page,$filter);
+		//Replace category id with name
+		$data = $this->_getCategoryName($data);	
 		$this->_setSearch('/app/menu', array( 'name', 'name_en' ));
 		//var_dump($data);
 		$this->_setListTools( $tools );
 		$this->_setListCol( $col );
 		$this->_setListData( $data );
-		$this->_setListPage( 'app/menu', $this->model->countAll(), 3 );
-
+		$this->_setListPage( 'app/menu?', $this->model->countAll(), $per_page );
+		$meta = array(
+			'thispage' => 'menu',
+			'prepage' => '',
+			'num' => '',
+			'addition_price' => ''
+		);
+		$this->_setListMeta( $meta );
 		$this->_list();
 	}
+	/***************** VIEW FUNCTION *********************/
+	function view()
+	{
+		$per_page = 10;
+		$viewer = $this->input->get('view');
+		$page = $this->input->get('page');
+		$page = !empty($page) ? $page : 1;
 
+		$this->setContent('title', 'Menu Management');
+
+		$tools = array(	
+			'add'	 => array( 'class'=>'button', 'name'=>'Add', 'action'=>'/app/menu/add' ),
+			'edit'	 => array( 'class'=>'button', 'name'=>'Edit', 'action'=>'/app/menu/edit' ),
+			'published' => array( 'class'=>'button', 'name'=>'Published', 'action'=>'/app/menu/published', 'view'=>$viewer ),
+			'unpublished' => array( 'class'=>'button', 'name'=>'Unpublished', 'action'=>'/app/menu/unpublished', 'view'=>$viewer ),
+			'remove' => array( 'class'=>'button', 'name'=>'Remove', 'action'=>'/app/menu/remove' ),
+			);
+		$col = array(
+			'id'	 => array( 'type'=>'normal', 'name'=>'ID', 'class'=>'col-id' ),
+			'category_id'	 => array( 'type'=>'normal', 'name'=>'category_id', 'class'=>'col-id' ),
+			'name'	 => array( 'type'=>'normal', 'name'=>'Name', 'class'=>'col-name' ),
+			'category_name' => array( 'type'=>'normal', 'name'=>'Category', 'class'=>'col-category' ),
+			);
+		
+		$this->_setSearch('/app/menu', array( 'name', 'name_en' ));
+		$filter = array('item_status'=>$viewer,
+						'shop_id'=>$this->shopId);
+		
+		$data = $this->model->getPage($page,$per_page,$filter);
+		//replace category id with name	
+		$data = $this->_getCategoryName($data);	
+
+		$size_row = $this->model->countAll($filter);
+		//var_dump($data);
+		$this->_setListTools( $tools );
+		$this->_setListCol( $col );
+		$this->_setListData( $data );
+		//$this->_setListPage( 'app/menu?', $this->model->countAll(), 3 );
+		$this->_setListPage( 'app/menu/view?view='.$viewer, $size_row,$per_page);
+
+		$this->_list();	
+	}
+	/***************** ADD FUNCTION *********************/
 	function add()
 	{
 		$this->setContent('title', 'Add New Menu');
@@ -65,7 +123,7 @@ class Menu extends APP_Controller
 
 		parent::add(site_url('app/menu/update'), $this->form);
 	}
-	
+	/***************** REGAIN FUNCTION *********************/
 	function regain(){
 		$this->setContent('title', 'Regain Management');
 
@@ -85,6 +143,7 @@ class Menu extends APP_Controller
 
 		$this->_list();
 	}
+	/***************** EDIT FUNCTION *********************/
 	function edit($id = false)
 	{
 		if( $id==false ){
@@ -103,10 +162,11 @@ class Menu extends APP_Controller
 		$this->setContent('title', 'Edit Menu');
 
 		// add js/css
+		//Option list
 		$this->template->add_js('media/js/script-form.js');
 		$this->template->add_js('media/lib/fancybox/jquery.fancybox-1.3.4.pack.js');
 		$this->template->add_css('media/lib/fancybox/jquery.fancybox-1.3.4.css');
-
+		//Insert value into box
 		$this->form['name']['value'] = $data['name'];
 		$this->form['name_en']['value'] = $data['name_en'];
 		$this->form['category_id']['value'] = $data['category_id'];
@@ -119,7 +179,7 @@ class Menu extends APP_Controller
 
 		parent::edit(site_url('app/menu/update'), $this->form, $id);
 	}
-
+	/***************** UPDATE FUNCTION *********************/
 	function update()
 	{
 		// filter post
@@ -135,6 +195,7 @@ class Menu extends APP_Controller
 
 		if( $this->input->post('id') ){
 			$data['id'] = $this->input->post('id');
+			
 		}
 
 		$menu_id = parent::update($data);
@@ -151,17 +212,73 @@ class Menu extends APP_Controller
 			redirect('app/menu');
 		}
 	}
+	/***************** PUBLISHED FUNCTION *********************/
+	function published($menu_id)
+	{
+		$page = $this->input->get('page');
+		$view = $this->input->get('view');
+		$this->db->where('id = ', $menu_id)
+				 ->update('ci_menu', array(
+					'item_status' => 'published'
+				));
 
-	function remove($id = false)
+		redirect('app/menu/view?view='.$view.'&page='.$page);
+	}	
+	/***************** UNPUBLISHED FUNCTION *********************/
+	function unpublished($menu_id)
+	{
+		$page = $this->input->get('page');
+		$view = $this->input->get('view');
+		$this->db->where('id = ', $menu_id)
+				 ->update('ci_menu', array(
+					'item_status' => 'unpublished'
+				));
+
+		redirect('app/menu/view?view='.$view.'&page='.$page);
+	}
+	/***************** REMOVE FUNCTION *********************/
+	function remove($id = false) // change item_status to deleted
 	{
 		parent::remove($id);
 		redirect('app/menu');
 	}
-
+	/***************** _getCategory FUNCTION *********************/
 	function _getCategory()
 	{
 		$this->load->model('category_model', 'category');
 		return $this->category->listCategory($this->shopId);
 	}
-
+	/***************** getAllReataurant FUNCTION *********************/
+     function getAllRestaurant()
+    {
+		$query = $this->db->query('SELECT * FROM ci_shop');
+        if( $query->result_array()<=0 ){
+            return false;
+        }else{
+	        foreach( $query->result_array() as $row ){
+	        	//$row['thumbnail'] = self::_getThumbnail($row['id'],$this->table_restaurant);
+				$allrest['restaurant'][$row['id']] = $row;		
+			}   
+			print_r($allrest);     	
+          // return $allrest;
+        }
+    }
+    
+	function _getCategoryName($data)
+	{
+		$i=0;
+		if($data <> null)
+		{
+			foreach ($data as $row)
+			{
+				$this->db->select()
+						 ->where('id =',$row['category_id']);
+				$query = $this->db->get( 'ci_category' );
+				$category = $query->row_array();
+				$data[$i]['category_name'] = $category['name'];
+				$i++;
+			}			
+		}
+		return $data;
+	}
 }

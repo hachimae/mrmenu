@@ -12,6 +12,7 @@ class Auth extends MY_Controller
 
 	function index()
 	{
+		
 		if ($message = $this->session->flashdata('message')) {
 			$this->load->view('auth/general_message', array('message' => $message));
 		} else {
@@ -33,10 +34,11 @@ class Auth extends MY_Controller
 			redirect('/app/send_again/');
 
 		} else {
+			//Allow login by username and password
 			$data['login_by_username'] = ($this->config->item('login_by_username', 'tank_auth') AND
 					$this->config->item('use_username', 'tank_auth'));
 			$data['login_by_email'] = $this->config->item('login_by_email', 'tank_auth');
-
+			
 			$this->form_validation->set_rules('login', 'Login', 'trim|required|xss_clean');
 			$this->form_validation->set_rules('password', 'Password', 'trim|required|xss_clean');
 			$this->form_validation->set_rules('remember', 'Remember me', 'integer');
